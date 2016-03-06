@@ -1,29 +1,3 @@
-//#include <iostream>
-//#include "pid.h"
-//#include <QDebug>
-
-//using namespace std;
-
-//int main(){
-//    qDebug()<<"testing pid";
-//    PID P1;
-//    P1.setRefreshInterval(0.02);
-//    P1.setDesiredPoint(0.0);
-//    P1.setErrorThreshold(0.001);
-//    P1.setOutputLowerLimit(-1);
-//    P1.setOutputUpperLimit(1);
-//    P1.setWeights(0.0001,0.000001,0.0001);
-
-//    float r;
-//    r = P1.refresh(0.5235);
-//    qDebug()<<r*1000;
-
-//    return 0;
-//}
-
-
-
-
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
