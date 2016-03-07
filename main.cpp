@@ -1,30 +1,3 @@
-//#include <iostream>
-//#include "pid.h"
-//#include <QDebug>
-
-//using namespace std;
-
-//int main(){
-//    qDebug()<<"testing pid";
-//    PID P1;
-//    P1.setRefreshInterval(0.02);
-//    P1.setDesiredPoint(0.0);
-//    P1.setErrorThreshold(0.001);
-//    P1.setOutputLowerLimit(-1);
-//    P1.setOutputUpperLimit(1);
-//    P1.setWeights(0.0001,0.000001,0.0001);
-
-//    float r;
-//    r = P1.refresh(0.5235);
-//    qDebug()<<r*1000;
-
-//    return 0;
-//}
-
-
-
-
-
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QDebug>
@@ -58,22 +31,22 @@ int main(int argc, char *argv[])
     engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
 
     delay(100);
-    for(int i =0;i<60;i++){
+    for(int i=0;i<600;i++){
         // thuc hien tinh toan vi tri moi cho con lac
         sample1.calNext();
-        qDebug()<<sample1.control.getLastErr();
-
-        //
+       //qDebug()<<sample1.getPosn()<<"\t"<<sample1.getAng();
         QString theta = QString::number(sample1.getAng());
         QString posn = QString::number(sample1.getPosn());
         engine.rootContext()->setContextProperty("theta", theta);
         engine.rootContext()->setContextProperty("posn", posn);
-        delay(100);
+
+//        if(abs(sample1.getAng())==0){
+//            break;
+//            qDebug()<<sample1.getAng();
+//        }
+        delay(10);
 
     }
-//    qDebug()<<sample1.angle;
-//    sample1.calNext();
-//    qDebug()<<sample1.angle;
 
     return app.exec();
 }

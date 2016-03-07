@@ -1,80 +1,88 @@
 #include "pendulum.h"
 #include <cmath>
 #include <QDebug>
-
+#include <iostream>
 #define PI  3.14159265
+#include "pid.h"
 
-Pendulum::Pendulum(double angle, double position)
-{
-    M =2.0;
-    m =0.1;
-    g =9.81;
-    rodLen = 0.5;
+using namespace std;
 
-    //degree2rad
-    angle = angle*PI/180;
-    this->angle = angle;
-    this->position = position ;
-
-    control.setRefreshInterval(0.02);
-    control.setDesiredPoint(0.0);
-    control.setErrorThreshold(0.001);
-    control.setOutputLowerLimit(-1);
-    control.setOutputUpperLimit(1);
-    control.setWeights(0.0001,0.000001,0.0001);
-    control.setv(0.0);
-
+Pendulum::Pendulum(double angle, double position){
+    M = 0.5;
+    m = 0.5;
+    b = 0.1;
+    I = 0.006;
+    g = 9.8;
+    l = 0.3;
+    dt =0.01;
+    dx =0;
+    da =0;
+    F=0;
+    this->angle = (angle*PI/180.0)+PI;
+    this->x =position;
+    control.setup(dt,100,-100,100,1,20);
 }
-Pendulum::Pendulum(float M, float m, float g, float rodLen, double angle, double position){
-    this-> M =M;
-    this->m =m;
-    this-> g =g;
-    this->rodLen = rodLen;
-    this-> angle = angle;
-    this-> position = position;
-}
+
 
 double Pendulum::getAng(){
-    return angle * 180/PI;
+    if (angle >= PI){
+        return -(angle-PI)*180/PI;
+    }else{
+        return (PI-angle)*180/PI;
+    }
 }
 double Pendulum::getPosn(){
-    return position + 350;// in image
+    return x*600 + 350;// in image
 }
 //void Pendulum::calNext(){
 //    static int i =0;
 //    i++;
-//    angle += pow(-1.0,double(i)) *1.15*exp(-2*0.1*i);
-//    position += -pow(-1.0,double(i)) *100*exp(-2*0.1*i);
+//    angle += 0.002;
+//    //position += -pow(-1.0,double(i)) *100*exp(-2*0.1*i);
 
 
 //}
 void Pendulum::calNext(){
-   float deltaPos = control.refresh(angle);
-   position += -deltaPos*220/0.00266985;
 
-   //calculate new tilt value at new position
-   //update new angle;
-    static int i =0;
-    i++;
-    angle += pow(-1.0,double(i))*1.15*exp(-2*0.1*i);
+   double phi;
+   if (angle >= PI){
+       phi=(angle-PI);
+   }else{
+       phi=-(PI-angle);
+   }
+   //qDebug()<<phi;
+   double output = F-control.calculate(0,phi);
+   //qDebug()<<"ka"<<output;
+   //denominator
+   double den = I*(M+m)+M*m*pow(l,2);
 
+   //2nd deviation of x
+   double ddx = (-dx*(I +m*pow(l,2))*b)/den + phi*pow(m,2)*g*pow(l,2)/den + output*(I+m*pow(l,2))/den;
 
-//    float del2angle,delangle,f;
-//    delangle = (angle-control.getLastErr())/0.02;
-//    f = -deltaPos;
-//    del2angle = (-f*cos(angle) - M*rodLen*pow(delangle,2.0) * cos(angle)* sin(angle) -(m+M)*g*sin(angle) )/(rodLen*(M + m*pow(sin(angle),2)));
-//    angle = control.getLastErr() + delangle*0.02 - del2angle*pow(0.02,2);
+   //2nd deviation of angle
+   double dda = -dx*m*l*b/den + phi*m*g*l*(M+m)/den + m*l*output;
 
-//    float v_new,a,temp;
-//    v_new= -deltaPos/0.02;
-//    a = (v_new-control.getv())/0.02;
+   //calculate dx, da;
+   dx = dx +ddx*dt;
+   da = da + dda*dt;
 
-//    angle = asin(M*a-deltaPos)/(m*g);
-//    control.setv(v_new);
-//    qDebug()<<temp;
+   //calculate angle;
 
+   phi += -dx*dt - ddx*dt*dt/2;
+   angle = PI+phi;
+   if(angle >=2*PI){
+       angle = angle-2*PI;
+   }
+    if (output>=0){
+        x+= -dx*dt-ddx*dt*dt/2;
+    }else{
+        x+= +dx*dt+ddx*dt*dt/2;
+    }
 
+//   F = F-control.calculate(0,phi);
+   qDebug()<<"x:"<<x*100<<"\t"<<"angle:"<<getAng()<<"dau: "<<output;
 }
 
-
-
+double Pendulum::getErr(){
+    return control.getErr();
+}

@@ -1,89 +1,73 @@
+#include <iostream>
+#include <cmath>
 #include "pid.h"
-//namespace pid {
-    PID::PID() :
-        last_error(0.f),
-        last_output(0.f),
-        integral(0.f),
-        error_threshold(0.f)
-        {}
 
-    void PID::setKp(const float &Kp) {
-        this->Kp = Kp;
-    }
+using namespace std;
 
-    void PID::setKi(const float &Ki) {
-        this->Ki = Ki*interval;
-    }
 
-    void PID::setKd(const float &Kd) {
-        this->Kd = Kd/interval;
-    }
-
-    void PID::setWeights(const float &Kp, const float &Ki, const float &Kd) {
-        setKp(Kp);
-        setKi(Ki);
-        setKd(Kd);
-    }
-
-    void PID::setRefreshInterval(const float &refresh_interval) {
-        interval = refresh_interval;
-    }
-
-    void PID::setRefreshRate(const float &refresh_rate) {
-        interval = 1.f/refresh_rate;
-    }
-
-    void PID::setErrorThreshold(const float &error_threshold) {
-        this->error_threshold = error_threshold;
-    }
-
-    void PID::setOutputLowerLimit(const float &output_lower_limit) {
-        this->output_lower_limit = output_lower_limit;
-    }
-
-    void PID::setOutputUpperLimit(const float &output_upper_limit) {
-        this->output_upper_limit = output_upper_limit;
-    }
-
-    void PID::setDesiredPoint(const float &desired_point) {
-        set_point = desired_point;
-    }
-
-    float PID::refresh(const float &feedback_input) {
-        error = set_point-feedback_input;
-        if (error >= error_threshold or error <= -error_threshold) {
-            last_output = Kp*error + Ki*integral + Kd*(error-last_error);
-            if (last_output > output_upper_limit) {
-                last_output = output_upper_limit;
-                if (integral/error < 0.f) {
-                    integral += (error+last_error)/2.f;
-                    last_error = error;
-                }
-                return output_upper_limit;
-            }
-            if (last_output < output_lower_limit) {
-                if (integral/error < 0.f) {
-                    integral += (error+last_error)/2.f;
-                    last_error = error;
-                }
-                last_output = output_lower_limit;
-                return output_lower_limit;
-            }
-            integral += (error+last_error)/2.f;
-            last_error = error;
-        }
-        return last_output;
-    }
- float PID::getLastErr(){
-     return last_error;
- }
-
- void PID::setv(float v){
-     this -> v =v;
-
- }
-float PID::getv(){
-    return v;
+PID::PID( double dt, double max, double min, double Kp, double Kd, double Ki ) :
+    _dt(dt),
+    _max(max),
+    _min(min),
+    _Kp(Kp),
+    _Kd(Kd),
+    _Ki(Ki),
+    _pre_error(0),
+    _integral(0)
+{
+}
+PID::PID(){
+    _dt=0;
+    _max =0;
+    _min =0;
+    _Kp=1;
+    _Kd =1;
+    _Ki =1;
+    _pre_error =0;
+    _integral =0;
 }
 
-//};
+double PID::calculate( double setpoint, double pv )
+{
+
+    // Calculate error
+    double error = setpoint - pv;
+
+    // Proportional term
+    double Pout = _Kp * error;
+
+    // Integral term
+    _integral += error * _dt;
+    double Iout = _Ki * _integral;
+
+    // Derivative term
+    double derivative = (error - _pre_error) / _dt;
+    double Dout = _Kd * derivative;
+
+    // Calculate total output
+    double output = Pout + Iout + Dout;
+
+    // Restrict to max/min
+    if( output > _max )
+        output = _max;
+    else if( output < _min )
+        output = _min;
+
+    // Save error to previous error
+    _pre_error = error;
+
+    return output;
+}
+void PID::setup(double dt, double max, double min, double Kp, double Kd, double Ki){
+    this->_dt=dt;
+    this->_max=max;
+    this->_min=min;
+    this->_Kp=Kp;
+    this->_Kd=Kd;
+    this->_Ki=Ki;
+    this->_pre_error=0;
+    this->_integral=0;
+}
+double PID::getErr(){
+    return _pre_error;
+}

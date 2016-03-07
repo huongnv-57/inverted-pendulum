@@ -4,25 +4,26 @@
 
 class Pendulum
 {
-public:
+private:
     float M, m;     //mass (kg)
     float g;        //gravity
-    float rodLen;
+    float l;
     double angle;     //rad
-    double position;  //0 at pixel 350
+    double b, I;
+    double x;  //0 at pixel 350
+    double dx;
+    double da;
+    double dt;
+    double F;
     PID control;
-
 public:
     Pendulum(double angle, double position);
-    Pendulum(float M, float m, float g, float rodLen,double angle, double position);
     double getPosn();
     double getAng();
+    double getErr();
 
     //function to calculate the next posn and angle
     void calNext();
-
-
-
 };
 
 
